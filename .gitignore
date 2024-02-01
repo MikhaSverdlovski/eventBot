@@ -1,4 +1,5 @@
-/.bin
-/.lib
+/bin
+/lib
 Config.py
 .idea/
+/Docs
