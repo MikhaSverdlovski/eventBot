@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 import requests
+import datetime
 from aiogram import Bot, Dispatcher, types, F
 from Security import check_user
 from aiogram.filters.command import Command
@@ -50,7 +51,8 @@ def upload_file_to_yandex_disk(YandexDisc_TOKEN, file_path) -> bool:
     headers = {'Authorization': f'OAuth {YandexDisc_TOKEN}'}
 
     # Указываем путь к папке на Яндекс.Диске
-    yandex_disk_folder_path = "/TGBOT/"
+    yandex_disk_folder_path = f"/TGBOT/"
+    print(yandex_disk_folder_path)
 
     try:
         # Получаем ссылку для загрузки
