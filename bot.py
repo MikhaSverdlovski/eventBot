@@ -3,11 +3,11 @@ import logging
 import os
 import requests
 from aiogram import Bot, Dispatcher, types, F
+from Security import check_user
 from aiogram.filters.command import Command
 from aiogram.types import Message
-#Импортировать конфиги
+# Импортировать конфиги
 from Config import Config
-
 
 # Включаем логирование, чтобы не пропустить важные сообщения
 logging.basicConfig(level=logging.INFO)
@@ -17,14 +17,14 @@ bot = Bot(token=Config.Telegram_TOKEN)
 dp = Dispatcher()
 
 
-# Хэндлер на команду /start
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
-    await message.answer("Hello!")
+    await message.answer("Добрый день. Это приложение для загрузки фоток на Яндекс Диск от Михаила Свердловского")
 
 
 # Получение фото
 @dp.message(F.photo)
+@check_user
 async def echo_gif(message: Message):
     photo_id = message.photo[-1].file_id
     file_info = await bot.get_file(photo_id)
@@ -46,25 +46,28 @@ async def echo_gif(message: Message):
         await message.answer("Не удалось загрузить фотографию на Яндекс.Диск")
 
 
-def upload_file_to_yandex_disk(YandexDisc_TOKEN, file_path):
+def upload_file_to_yandex_disk(YandexDisc_TOKEN, file_path) -> bool:
     headers = {'Authorization': f'OAuth {YandexDisc_TOKEN}'}
 
     # Указываем путь к папке на Яндекс.Диске
     yandex_disk_folder_path = "/TGBOT/"
 
-    # Получаем ссылку для загрузки
-    response = requests.get(
-        'https://cloud-api.yandex.net/v1/disk/resources/upload',
-        headers=headers,
-        params={'path': yandex_disk_folder_path + os.path.basename(file_path), 'overwrite': 'true'}
-    )
-    href = response.json()['href']
+    try:
+        # Получаем ссылку для загрузки
+        response = requests.get(
+            'https://cloud-api.yandex.net/v1/disk/resources/upload',
+            headers=headers,
+            params={'path': yandex_disk_folder_path + os.path.basename(file_path), 'overwrite': 'true'}
+        )
+        href = response.json()['href']
 
-    # Загружаем файл
-    with open(file_path, 'rb') as file:
-        requests.put(href, files={'file': file})
+        # Загружаем файл
+        with open(file_path, 'rb') as file:
+            requests.put(href, files={'file': file})
 
-    return True
+        return True
+    except Exception as e:
+        return False
 
 
 # Запуск процесса поллинга новых апдейтов
