@@ -25,8 +25,7 @@ def check_user(func):
             if str(mychat_id) == conf:
                 return await func(*args, **kwargs)
             else:
-                # Если mychat_id не равен '147103464', можно просто прервать выполнение обработчика
-                return
+                return await message.answer("Свяжитесь с Михаилом Свердловским. Приложение только для него")
         else:
             raise ValueError("Argument 'message' is required for check_user decorator")
 
