@@ -50,4 +50,4 @@ def check_user(func):
 async def logging(chat_id: str, username: str) -> None:
     if username is not None:
         async with aiofiles.open("log.txt", "a") as f:
-            await f.write(f"{datetime.datetime.now()} chat_id: {chat_id} Username: {username}\n")
+            await f.write(f"{datetime.now()} chat_id: {chat_id} Username: {username}\n")
