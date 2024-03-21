@@ -33,7 +33,7 @@ def check_user(func):
         message = args[0]
         if message:  # Проверяем, существует ли объект message
             mychat_id = await get_chat(message)
-            conf = Config.Chat_id
+            conf = Config.CHAT_ID
             if str(mychat_id) == conf:
                 username = await get_user(message)
                 await logging(chat_id=mychat_id, username=username)

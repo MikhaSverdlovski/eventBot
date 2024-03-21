@@ -1,75 +1,55 @@
 import asyncio
 import logging
-import os
-import requests
-import datetime
+from aiogram.types import FSInputFile
 from aiogram import Bot, Dispatcher, types, F
-from Security import check_user
 from aiogram.filters.command import Command
-from aiogram.types import Message
-# Импортировать конфиги
+
 from Config import Config
 
 # Включаем логирование, чтобы не пропустить важные сообщения
 logging.basicConfig(level=logging.INFO)
 # Объект бота
-bot = Bot(token=Config.Telegram_TOKEN)
+bot = Bot(token=Config.TELEGRAM_TOKEN, parse_mode="HTML")
 # Диспетчер
 dp = Dispatcher()
 
 
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
-    await message.answer("Добрый день. Это приложение для загрузки фоток на Яндекс Диск от Михаила Свердловского")
+    photo = FSInputFile("Static/1.jpg")
+    caption = (f"<B>Добрый день, {message.from_user.first_name}</b> \n\n"
+               "Здесь вы можете записаться на ближайшее мероприятие\n\n"
+               "Cписок команд:\n"
+               "\n"
+               "/start - Перезапустить бота\n"
+               "/register - Пройти процедуру регистрации\n"
+               "/help - Помощь")
+    await message.answer_photo(photo, caption=caption)
 
 
-# Получение фото
-@dp.message(F.photo)
-@check_user
-async def echo_gif(message: Message):
-    photo_id = message.photo[-1].file_id
-    file_info = await bot.get_file(photo_id)
-    file_path = file_info.file_path
-    photo_url = f"https://api.telegram.org/file/bot{bot.token}/{file_path}"
-
-    # Скачиваем фото временно
-    photo_name = file_path.split('/')[-1]
-    with requests.get(photo_url, stream=True) as r:
-        with open(photo_name, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=8192):
-                f.write(chunk)
-
-    # Загружаем фото на Яндекс.Диск
-    if upload_file_to_yandex_disk(Config.YandexDisc_TOKEN, photo_name):
-        await message.answer("Фотография успешно загружена на Яндекс.Диск")
-        os.remove(photo_name)
-    else:
-        await message.answer("Не удалось загрузить фотографию на Яндекс.Диск")
+@dp.message(Command("register"))
+async def cmd_register(message: types.Message):
+    kb = [
+        [
+            types.KeyboardButton(text="С пюрешкой"),
+            types.KeyboardButton(text="Без пюрешки")
+        ],
+    ]
+    keyboard = types.ReplyKeyboardMarkup(
+        keyboard=kb,
+        resize_keyboard=True,
+        input_field_placeholder="Выберите способ подачи"
+    )
+    await message.answer("Как подавать котлеты?", reply_markup=keyboard)
 
 
-def upload_file_to_yandex_disk(YandexDisc_TOKEN, file_path) -> bool:
-    headers = {'Authorization': f'OAuth {YandexDisc_TOKEN}'}
+@dp.message(F.text.lower() == "с пюрешкой")
+async def with_puree(message: types.Message):
+    await message.reply("Отличный выбор!", reply_markup=types.ReplyKeyboardRemove())
 
-    # Указываем путь к папке на Яндекс.Диске
-    yandex_disk_folder_path = f"/TGBOT/"
-    print(yandex_disk_folder_path)
-
-    try:
-        # Получаем ссылку для загрузки
-        response = requests.get(
-            'https://cloud-api.yandex.net/v1/disk/resources/upload',
-            headers=headers,
-            params={'path': yandex_disk_folder_path + os.path.basename(file_path), 'overwrite': 'true'}
-        )
-        href = response.json()['href']
-
-        # Загружаем файл
-        with open(file_path, 'rb') as file:
-            requests.put(href, files={'file': file})
-
-        return True
-    except Exception as e:
-        return False
+@dp.message(F.text.lower() == "без пюрешки")
+async def without_puree(message: types.Message):
+    await message.reply("Так невкусно!", reply_markup=types.ReplyKeyboardRemove())
 
 
 # Запуск процесса поллинга новых апдейтов

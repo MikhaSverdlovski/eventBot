@@ -5,3 +5,4 @@ Config.py
 /Docs
 __pycache__
 log.txt
+.env
